@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Productos</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#111;
+    color:white;
+    text-align:center;
+    margin:0;
+}
+
+.login-box{
+    margin-top:100px;
+}
+
+input, button{
+    padding:10px;
+    margin:5px;
+    border:none;
+    border-radius:5px;
+}
+
+button{
+    background:gold;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#ffd700;
+}
+
+#contenido{
+    display:none;
+    margin-top:20px;
+}
+
+table{
+    width:95%;
+    margin:auto;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th{
+    background:gold;
+    color:black;
+}
+
+td, th{
+    border:1px solid #444;
+    padding:8px;
+}
+
+img{
+    width:60px;
+    border-radius:5px;
+}
+
+.total-box{
+    margin-top:20px;
+    font-size:18px;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-box" id="login">
+    <h2>Acceso</h2>
+    <input type="password" id="password" placeholder="Ingrese contraseña">
+    <button onclick="verificar()">Entrar</button>
+</div>
+
+<div id="contenido">
+    <h2>Control de Productos</h2>
+
+    <input type="text" id="nombre" placeholder="Nombre del producto">
+    <input type="number" id="compra" placeholder="Precio compra">
+    <input type="number" id="venta" placeholder="Precio venta">
+    <input type="file" id="imagen" accept="image/*">
+    <button onclick="agregarProducto()">Agregar</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Producto</th>
+                <th>Compra</th>
+                <th>Venta</th>
+                <th>Ganancia</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody id="tabla"></tbody>
+    </table>
+
+    <div class="total-box">
+        Total Compra: $<span id="totalCompra">0</span> |
+        Total Venta: $<span id="totalVenta">0</span> |
+        Ganancia Total: $<span id="totalGanancia">0</span>
+    </div>
+</div>
+
+<script>
+
+function verificar(){
+    var pass = document.getElementById("password").value.trim();
+    if(pass === "007"){
+        document.getElementById("login").style.display="none";
+        document.getElementById("contenido").style.display="block";
+        cargarDatos();
+    } else{
+        alert("Contraseña incorrecta");
+    }
+}
+
+var productos = JSON.parse(localStorage.getItem("productosKP")) || [];
+
+function guardarDatos(){
+    localStorage.setItem("productosKP", JSON.stringify(productos));
+}
+
+function agregarProducto(){
+    var nombre = document.getElementById("nombre").value;
+    var compra = parseFloat(document.getElementById("compra").value);
+    var venta = parseFloat(document.getElementById("venta").value);
+    var archivo = document.getElementById("imagen").files[0];
+
+    if(nombre !== "" && !isNaN(compra) && !isNaN(venta)){
+
+        if(archivo){
+            var reader = new FileReader();
+            reader.onload = function(e){
+
+                var producto = {
+                    nombre: nombre,
+                    compra: compra,
+                    venta: venta,
+                    ganancia: venta - compra,
+                    imagen: e.target.result
+                };
+
+                productos.push(producto);
+                guardarDatos();
+                mostrarProductos();
+            };
+            reader.readAsDataURL(archivo);
+        } else {
+
+            var producto = {
+                nombre: nombre,
+                compra: compra,
+                venta: venta,
+                ganancia: venta - compra,
+                imagen: ""
+            };
+
+            productos.push(producto);
+            guardarDatos();
+            mostrarProductos();
+        }
+
+        document.getElementById("nombre").value="";
+        document.getElementById("compra").value="";
+        document.getElementById("venta").value="";
+        document.getElementById("imagen").value="";
+    } else{
+        alert("Completa todos los campos");
+    }
+}
+
+function mostrarProductos(){
+    var tabla = document.getElementById("tabla");
+    tabla.innerHTML="";
+
+    var totalCompra=0;
+    var totalVenta=0;
+    var totalGanancia=0;
+
+    for(var i=0; i<productos.length; i++){
+
+        totalCompra += productos[i].compra;
+        totalVenta += productos[i].venta;
+        totalGanancia += productos[i].ganancia;
+
+        var fila = "<tr>";
+
+        if(productos[i].imagen !== ""){
+            fila += "<td><img src='" + productos[i].imagen + "'></td>";
+        } else {
+            fila += "<td>Sin foto</td>";
+        }
+
+        fila += "<td>" + productos[i].nombre + "</td>";
+        fila += "<td>$" + productos[i].compra + "</td>";
+        fila += "<td>$" + productos[i].venta + "</td>";
+        fila += "<td>$" + productos[i].ganancia + "</td>";
+        fila += "<td><button onclick='eliminar(" + i + ")'>X</button></td>";
+        fila += "</tr>";
+
+        tabla.innerHTML += fila;
+    }
+
+    document.getElementById("totalCompra").innerText = totalCompra;
+    document.getElementById("totalVenta").innerText = totalVenta;
+    document.getElementById("totalGanancia").innerText = totalGanancia;
+}
+
+function eliminar(index){
+    productos.splice(index,1);
+    guardarDatos();
+    mostrarProductos();
+}
+
+function cargarDatos(){
+    mostrarProductos();
+}
+
+</script>
+
+</body>
+</html>
